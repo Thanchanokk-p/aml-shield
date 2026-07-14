@@ -1,0 +1,22 @@
+artifact_path: /Users/fripuran/aml-shield-main/notebooks/mlruns/1/models/m-ce284dd81b364fe4b59642334dd46271/artifacts
+flavors:
+  python_function:
+    data: model.ubj
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.xgboost
+    python_version: 3.13.12
+  xgboost:
+    code: null
+    data: model.ubj
+    model_class: xgboost.sklearn.XGBClassifier
+    model_format: ubj
+    xgb_version: 1.7.6
+mlflow_version: 3.13.0
+model_id: m-ce284dd81b364fe4b59642334dd46271
+model_size_bytes: 1247858
+model_uuid: m-ce284dd81b364fe4b59642334dd46271
+prompts: null
+run_id: e358ce0d782d4d6198674f9d7503953c
+utc_time_created: '2026-07-13 23:30:13.619615'

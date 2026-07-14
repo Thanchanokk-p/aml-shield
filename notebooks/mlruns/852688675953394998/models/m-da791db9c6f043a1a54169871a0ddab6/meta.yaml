@@ -1,0 +1,10 @@
+artifact_location: /Users/fripuran/aml-shield-main/notebooks/mlruns/852688675953394998/models/m-da791db9c6f043a1a54169871a0ddab6/artifacts
+creation_timestamp: 1781050615391
+experiment_id: '852688675953394998'
+last_updated_timestamp: 1781050623401
+model_id: m-da791db9c6f043a1a54169871a0ddab6
+model_type: null
+name: xgboost_model
+source_run_id: b290f3dd2c054371bcdfb24d0d049208
+status: 2
+status_message: null

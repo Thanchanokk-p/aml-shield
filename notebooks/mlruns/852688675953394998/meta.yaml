@@ -1,0 +1,9 @@
+artifact_location: /Users/fripuran/aml-shield-main/notebooks/mlruns/852688675953394998
+creation_time: 1781050545591
+effective_trace_archival_retention: null
+experiment_id: '852688675953394998'
+last_update_time: 1781050545591
+lifecycle_stage: active
+name: aml-shield-experiments
+trace_location: null
+workspace: default

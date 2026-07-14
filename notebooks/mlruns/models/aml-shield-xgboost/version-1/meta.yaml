@@ -1,0 +1,16 @@
+creation_timestamp: 1781050623414
+current_stage: None
+deployment_job_state: null
+description: null
+last_updated_timestamp: 1781050623414
+model_id: m-da791db9c6f043a1a54169871a0ddab6
+name: aml-shield-xgboost
+run_id: b290f3dd2c054371bcdfb24d0d049208
+run_link: null
+source: models:/m-da791db9c6f043a1a54169871a0ddab6
+status: READY
+status_message: null
+storage_location: /Users/fripuran/aml-shield-main/notebooks/mlruns/852688675953394998/models/m-da791db9c6f043a1a54169871a0ddab6/artifacts
+user_id: null
+version: 1
+workspace: default
