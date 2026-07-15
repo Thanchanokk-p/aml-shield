@@ -250,7 +250,10 @@ def predict(transaction: Transaction, threshold: float = 0.5):
         features = build_feature_vector(transaction.model_dump())
 
         # Step 2: Get fraud probability (0.0 to 1.0)
-        risk_score = float(model.predict(xgb.DMatrix(features))[0])
+        # Reorder columns to match the exact order the model was trained on
+        # (raw xgb.Booster is strict about feature name/order, unlike sklearn wrapper)
+        features = features[model.feature_names]
+        risk_score = float(model.predict(xgb.DMatrix(features, feature_names=model.feature_names))[0])
 
         # Step 3: Apply threshold
         flagged = risk_score >= threshold
