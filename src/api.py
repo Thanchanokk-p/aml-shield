@@ -23,7 +23,8 @@ import os
 import sys
 from datetime import datetime
 
-import mlflow.xgboost          # loads our model from MLflow registry
+import mlflow.xgboost
+import xgboost as xgb          # loads our model from MLflow registry
 import numpy as np             # array operations for SHAP
 import pandas as pd            # DataFrame for feature vector
 import shap                    # explains model predictions
@@ -100,7 +101,10 @@ print(f"  DB exists    : {os.path.exists(_DB_PATH)}")
 
 try:
     mlflow.set_tracking_uri(_TRACKING_URI)
-    model     = mlflow.xgboost.load_model("models:/aml-shield-xgboost/1")
+    model = xgb.Booster()
+    model.load_model(os.path.join(_PROJECT_ROOT, "mlruns", "1", "models",
+                                    "m-ce284dd81b364fe4b59642334dd46271",
+                                    "artifacts", "model.ubj"))
     explainer = shap.TreeExplainer(model)
     MODEL_LOADED = True
     print("Model loaded successfully.")
@@ -246,7 +250,7 @@ def predict(transaction: Transaction, threshold: float = 0.5):
         features = build_feature_vector(transaction.model_dump())
 
         # Step 2: Get fraud probability (0.0 to 1.0)
-        risk_score = float(model.predict_proba(features)[0][1])
+        risk_score = float(model.predict(xgb.DMatrix(features))[0])
 
         # Step 3: Apply threshold
         flagged = risk_score >= threshold
