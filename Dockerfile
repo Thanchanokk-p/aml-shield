@@ -12,6 +12,10 @@ WORKDIR /app
 # Copying requirements.txt and installing before copying the rest of
 # the code means Docker can reuse this layer on future builds as long
 # as requirements.txt hasn't changed — even if app code changes a lot.
+# ── Install build tools needed to compile packages with C++ extensions (e.g. shap) ──
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
