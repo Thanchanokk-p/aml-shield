@@ -155,6 +155,7 @@ class PredictionResponse(BaseModel):
     flagged        : bool
     risk_level     : str
     top_reasons    : list
+    explanation    : str
     threshold_used : float
     timestamp      : str
 
@@ -267,6 +268,7 @@ def predict(transaction: Transaction, threshold: float = 0.5):
         # Step 5: SHAP explanation
         shap_values = explainer.shap_values(features)
         top_reasons = _get_top_reasons(features, shap_values, n=3)
+        explanation = build_explanation_summary(top_reasons)
 
         # Step 6: Update counters
         _stats["total"] += 1
@@ -278,6 +280,7 @@ def predict(transaction: Transaction, threshold: float = 0.5):
 
         return PredictionResponse(
             transaction_id = txn_id,
+            explanation    = explanation,
             risk_score     = round(risk_score, 4),
             flagged        = flagged,
             risk_level     = risk_level,
@@ -326,3 +329,41 @@ def _get_top_reasons(
         })
 
     return reasons
+
+def _format_reason_sentence(reason: dict) -> str:
+
+    """
+
+    Convert one SHAP reason dict into a single plain-English sentence.
+
+    Used to make API responses understandable to compliance officers
+
+    and non-technical stakeholders (FCA explainability requirement).
+
+    """
+
+    label = reason["label"]
+
+    if reason["direction"] == "increases":
+
+        verb = "pushes the fraud risk score UP"
+
+    else:
+
+        verb = "pushes the fraud risk score DOWN"
+
+    return f"{label} — {verb}."
+
+def build_explanation_summary(reasons: list) -> str:
+
+    """
+
+    Combine top reasons into one short paragraph explaining the decision.
+
+    This is what gets shown to a human reviewing the flagged transaction.
+
+    """
+
+    sentences = [_format_reason_sentence(r) for r in reasons]
+
+    return " ".join(sentences)
