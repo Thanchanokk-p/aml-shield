@@ -267,7 +267,7 @@ def predict(transaction: Transaction, threshold: float = 0.5):
 
         # Step 5: SHAP explanation
         shap_values = explainer.shap_values(features)
-        top_reasons = _get_top_reasons(features, shap_values, n=3)
+        top_reasons = _get_top_reasons(features, shap_values, n=4)  # n=4 based on Regulation B (ECOA) adverse action notice standard
         explanation = build_explanation_summary(top_reasons)
 
         # Step 6: Update counters
