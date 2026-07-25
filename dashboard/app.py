@@ -107,7 +107,7 @@ if "last_result" in st.session_state:
     level_colors = {"LOW": "green", "MEDIUM": "orange", "HIGH": "red", "CRITICAL": "darkred"}
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("Risk Score", f"{risk_score:.4f}")
+    c1.metric("Risk Score", f"{risk_score:.2f}")
     c2.metric("Risk Level", risk_level)
     c3.metric("Flagged as Fraud", "Yes" if flagged else "No")
 
@@ -145,7 +145,10 @@ if "last_result" in st.session_state:
     shap_values = [r["shap_value"] for r in reasons]
     colors = ["#C62828" if v > 0 else "#1565C0" for v in shap_values]
 
-    fig2 = go.Figure(go.Bar(x=shap_values, y=labels, orientation="h", marker_color=colors))
+    fig2 = go.Figure(go.Bar(
+        x=shap_values, y=labels, orientation="h", marker_color=colors,
+        hovertemplate="%{y}: %{x:.2f}<extra></extra>",
+    ))
     fig2.update_layout(
         title="Top Factors Driving This Decision (SHAP values)",
         xaxis_title="Impact on fraud score (red = increases, blue = decreases)",
