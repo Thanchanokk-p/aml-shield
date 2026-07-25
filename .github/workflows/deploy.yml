@@ -20,6 +20,21 @@ jobs:
           script: |
             cd ~/aml-shield-main
             git pull origin main
+
+            # ── Disk space safety check ──────────────────────────
+            # Check if available disk space is under 2GB.
+            # If so, clean Docker cache automatically before building.
+            AVAILABLE_KB=$(df --output=avail / | tail -1)
+            AVAILABLE_GB=$((AVAILABLE_KB / 1024 / 1024))
+            echo "Disk space available: ${AVAILABLE_GB}GB"
+            if [ "$AVAILABLE_GB" -lt 2 ]; then
+              echo "WARNING: Low disk space (<2GB). Cleaning Docker cache..."
+              docker system prune -a -f
+              AVAILABLE_KB=$(df --output=avail / | tail -1)
+              AVAILABLE_GB=$((AVAILABLE_KB / 1024 / 1024))
+              echo "Disk space after cleanup: ${AVAILABLE_GB}GB"
+            fi
+
             docker build -t aml-shield:v1 .
             docker rm -f aml-shield
             docker run -d -p 8000:8000 --restart unless-stopped --name aml-shield aml-shield:v1
