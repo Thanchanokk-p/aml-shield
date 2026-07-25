@@ -48,7 +48,9 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/aml-shield-main
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
 
             # ── Disk space safety check ──────────────────────────
             # Check if available disk space is under 2GB.
