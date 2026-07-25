@@ -69,11 +69,22 @@ jobs:
             docker build -t aml-shield:v1 .
             docker rm -f aml-shield
             docker run -d -p 8000:8000 --restart unless-stopped --name aml-shield aml-shield:v1
-            sleep 8
-            if ! curl -sf http://localhost:8000/health > /dev/null; then
+
+            # Retry health check up to 6 times (30s max) instead of a fixed sleep
+            HEALTHY=false
+            for i in 1 2 3 4 5 6; do
+              sleep 5
+              if curl -sf http://localhost:8000/health > /dev/null; then
+                HEALTHY=true
+                break
+              fi
+              echo "Health check attempt $i failed, retrying..."
+            done
+
+            if [ "$HEALTHY" = "false" ]; then
               echo "Health check failed. Rolling back to previous image..."
               docker rm -f aml-shield
               docker run -d -p 8000:8000 --restart unless-stopped --name aml-shield aml-shield:previous
               exit 1
             fi
-            echo "Deployment healthy.
+            echo "Deployment healthy."
