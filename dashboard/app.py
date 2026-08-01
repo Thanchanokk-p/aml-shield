@@ -12,7 +12,7 @@ import streamlit as st
 import plotly.graph_objects as go
 from datetime import datetime
 
-API_URL = "http://13.40.161.73:8000"
+API_URL = "http://18.171.188.196:8000"
 
 st.set_page_config(
     page_title="AML-Shield Dashboard",
