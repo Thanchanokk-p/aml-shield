@@ -21,8 +21,8 @@ jobs:
           pip install pytest
           pip install -r requirements.txt
 
-      - name: Run smoke tests
-        run: pytest tests/test_api_health.py -v
+      - name: Run tests
+        run: pytest tests/ -v
 
   deploy:
     needs: test
