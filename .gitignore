@@ -7,3 +7,20 @@ __pycache__/
 data/
 pp_data.csv
 *.csv
+
+# Terraform
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+
+# Virtual environments
+venv_aws/
+
+# MLflow local artifacts
+mlflow.db
+notebooks/mlruns/
+
+# Backup/draft files
+*.bak
+write_dashboard*.py
+aws/model-sync/

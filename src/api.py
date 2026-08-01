@@ -20,6 +20,7 @@ How to test:
 
 # ── Imports ────────────────────────────────────────────────────────
 import os
+import json
 import sys
 from datetime import datetime
 
@@ -102,12 +103,17 @@ print(f"  DB exists    : {os.path.exists(_DB_PATH)}")
 try:
     mlflow.set_tracking_uri(_TRACKING_URI)
     model = xgb.Booster()
-    model.load_model(os.path.join(_PROJECT_ROOT, "mlruns", "1", "models",
-                                    "m-ce284dd81b364fe4b59642334dd46271",
-                                    "artifacts", "model.ubj"))
+    model.load_model(os.path.join(_PROJECT_ROOT, "models", "xgboost-model"))
     explainer = shap.TreeExplainer(model)
     MODEL_LOADED = True
     print("Model loaded successfully.")
+
+    # Load the canonical 66-feature column order from the training-time
+    # config, instead of relying on model.feature_names (which is only
+    # embedded in newer .ubj files, not in SageMaker's legacy binary format)
+    with open(os.path.join(_PROJECT_ROOT, "data", "feature_config.json")) as f:
+        _feature_config = json.load(f)
+    EXPECTED_FEATURE_ORDER = _feature_config["all_features"]
 
 except Exception as e:
     print(f"WARNING: Model failed to load: {e}")
@@ -253,8 +259,8 @@ def predict(transaction: Transaction, threshold: float = 0.5):
         # Step 2: Get fraud probability (0.0 to 1.0)
         # Reorder columns to match the exact order the model was trained on
         # (raw xgb.Booster is strict about feature name/order, unlike sklearn wrapper)
-        features = features[model.feature_names]
-        risk_score = float(model.predict(xgb.DMatrix(features, feature_names=model.feature_names))[0])
+        features = features[EXPECTED_FEATURE_ORDER]
+        risk_score = float(model.predict(xgb.DMatrix(features, feature_names=EXPECTED_FEATURE_ORDER))[0])
 
         # Step 3: Apply threshold
         flagged = risk_score >= threshold
