@@ -2,7 +2,7 @@
 **An end-to-end money-laundering detection system — from a Jupyter notebook to a live AWS MLOps pipeline.**
 
 [![CI](https://github.com/Thanchanokk-p/aml-shield/actions/workflows/deploy.yml/badge.svg)](https://github.com/Thanchanokk-p/aml-shield/actions)
-[![Live Demo](https://img.shields.io/badge/demo-streamlit-FF4B4B)](https://aml-shield-mlops.streamlit.app/)
+[![Live Demo](https://aml-shield-mlops.streamlit.app/)](https://aml-shield-mlops.streamlit.app/)
 
 AML-Shield is a full-cycle MLOps project built on IBM's NeurIPS 2023 Anti-Money Laundering benchmark (~5M transactions, 0.10% fraud rate). It covers everything from exploratory data analysis to a production deployment on AWS SageMaker, including a real production bug (a cross-environment parity failure) that shaped most of the engineering decisions in the second half of the project.
 
