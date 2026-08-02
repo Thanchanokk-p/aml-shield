@@ -6,7 +6,7 @@
 
 AML-Shield is a full-cycle MLOps project built on IBM's NeurIPS 2023 Anti-Money Laundering benchmark (~5M transactions, 0.10% fraud rate). It covers everything from exploratory data analysis to a production deployment on AWS SageMaker, including a real production bug (a cross-environment parity failure) that shaped most of the engineering decisions in the second half of the project.
 
-**Live demo:** [aml-shield-dthrnzymsmqrcehjed22i2.streamlit.app](https://aml-shield-mlops.streamlit.app/)
+**Live demo:** [https://aml-shield-mlops.streamlit.app/](https://aml-shield-mlops.streamlit.app/)
 
 ---
 
