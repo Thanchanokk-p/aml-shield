@@ -22,23 +22,6 @@ AML-Shield is a full-cycle MLOps project built on IBM's NeurIPS 2023 Anti-Money 
 
 ---
 
-## Architecture
-
-```text
-Local Development --> CI/CD --> EC2 (Docker/FastAPI) <-- Streamlit Dashboard
-        |                          ^
-        v                          |
-      MLflow <----------------- Prefect (training + drift-check flows, scheduled daily)
-        |
-        v
-      S3 --> SageMaker Processing --> SageMaker Training --> Model Registry --> SageMaker Endpoint
-                                                              (Terraform-managed, parity-tested against EC2)
-```
-
-Full diagram: `docs/architecture.png` (add once finalized)
-
----
-
 ## Repository Structure
 
 ```text
