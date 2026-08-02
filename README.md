@@ -27,144 +27,63 @@ AML-Shield is a full-cycle MLOps project built on IBM's NeurIPS 2023 Anti-Money 
 aml-shield/
 │
 ├── notebooks/                          Exploratory + experimental work (the research half)
-│   ├── 01_eda_data_exploration.ipynb       EDA on ~5M IBM transactions: class balance, amount
-│   │                                        distributions, payment formats, currencies, temporal
-│   │                                        and velocity patterns (produces figures 01–07)
-│   ├── 02_feature_engineering.ipynb        Builds the canonical 66-feature set: temporal, amount,
-│   │                                        network, velocity and one-hot encoded features.
-│   │                                        Writes features_engineered.parquet + feature_config.json
-│   ├── 03_baseline_model_mlflow.ipynb      XGBoost baseline, MLflow-tracked. Train/val/test split
-│   │                                        (70/15/15, random_state=42), threshold analysis,
-│   │                                        SHAP summary + waterfall, business cost model
+│   ├── 01_eda_data_exploration.ipynb       EDA on ~5M IBM transactions — class balance, amounts, formats, temporal patterns
+│   ├── 02_feature_engineering.ipynb        Builds the canonical 66-feature set → features_engineered.parquet
+│   ├── 03_baseline_model_mlflow.ipynb      XGBoost baseline, MLflow-tracked — split, threshold analysis, SHAP, cost model
 │   ├── 04_trial.ipynb                      Scratch/experiment notebook (not part of the pipeline)
-│   ├── 05_phase8_generalization.ipynb      Phase 8: re-tests the headline finding on a second,
-│   │                                        independent dataset — the result reverses (p = 0.0044)
-│   ├── mlflow.db                           Local MLflow tracking backend (SQLite) used by notebooks
-│   ├── mlruns/                             Notebook-scoped MLflow run artifacts (figures, models)
+│   ├── 05_phase8_generalization.ipynb      Re-tests the headline finding on a second dataset — result reverses (p = 0.0044)
+│   ├── mlflow.db                           Local MLflow tracking backend (SQLite)
+│   ├── mlruns/                             Notebook-scoped MLflow run artifacts
 │   └── mlruns.zip                          Archived copy of the above
 │
 ├── src/                                Production Python package (the engineering half)
 │   ├── __init__.py
-│   ├── api.py                              FastAPI serving app. Loads the XGBoost model from the
-│   │                                        MLflow registry via an absolute sqlite path, scores a
-│   │                                        transaction, runs SHAP, and returns JSON.
-│   │                                        Routes: GET / , GET /health , GET /metrics ,
-│   │                                        POST /predict?threshold=0.5
-│   │                                        Helpers: _get_top_reasons, _format_reason_sentence,
-│   │                                        build_explanation_summary (plain-English SHAP output)
-│   ├── features.py                         The single source of truth for feature construction —
-│   │                                        the notebook logic rewritten as importable functions so
-│   │                                        training and serving cannot drift apart.
-│   │                                        _build_temporal_features, _build_amount_features,
-│   │                                        _build_network_features, _build_velocity_features,
-│   │                                        _build_encoded_features → build_feature_vector (66 cols),
-│   │                                        plus validate_payment_format.
-│   │                                        Pins ALL_PAYMENT_FORMATS (7) and ALL_CURRENCIES (15) so
-│   │                                        one-hot columns always match training order
-│   ├── pipeline.py                         Prefect training flow (`aml-shield-training-pipeline`) —
-│   │                                        notebook 03 sections 0–3 converted to tasks:
-│   │                                        load-data (2 retries) → split-data → train-and-log-model
-│   │                                        (1 retry), logging params/metrics to MLflow
-│   ├── monitoring.py                       Prefect drift flow (`aml-shield-drift-check`) — Evidently
-│   │                                        DataDriftPreset comparing an older 70% reference slice
-│   │                                        against a newer 30% current slice
-│   ├── fairness_audit.py                   Per-group AUC across one-hot payment-format columns
-│   │                                        (fmt_*), using the latest MLflow run's model
-│   ├── figures/                            13 exported analysis figures (01_class_distribution.png …
-│   │                                        13_shap_waterfall_fraud.png) reused in the write-up
+│   ├── api.py                              FastAPI serving app — scores a transaction, runs SHAP, returns JSON
+│   ├── features.py                         Single source of truth for feature construction (shared by training + serving)
+│   ├── pipeline.py                         Prefect training flow — load → split → train-and-log-model
+│   ├── monitoring.py                       Prefect drift flow — Evidently DataDriftPreset, reference vs. current
+│   ├── fairness_audit.py                   Per-group AUC across payment formats
+│   ├── figures/                            13 exported analysis figures reused in the write-up
 │   └── monitoring_reports/
 │       └── drift_report.html               Latest generated Evidently drift report
 │
-├── aws/                                SageMaker migration — the same pipeline, on AWS (Phase 9)
-│   ├── processing/
-│   │   ├── feature_engineering_job.py      Runs as a SageMaker Processing Job: reads raw
-│   │   │                                    HI-Small_Trans.csv from /opt/ml/processing/input/,
-│   │   │                                    applies the identical 5 feature functions, writes
-│   │   │                                    parquet + feature_config.json to the output mount
-│   │   └── launch_job.py                   Submits that job (SKLearnProcessor, ml.m5.2xlarge)
-│   ├── training/
-│   │   ├── prepare_training_data.py        Converts the parquet to SageMaker XGBoost CSV format
-│   │   │                                    (target first, no header/index); same 70/15 split and
-│   │   │                                    random_state=42 as the local run; emits scale_pos_weight
-│   │   ├── launch_training.py              SageMaker Training Job with built-in XGBoost 1.7-1 and
-│   │   │                                    hyperparameters matched to notebook 03
-│   │   └── scale_pos_weight.txt            979.9163907284768 — the measured imbalance ratio
-│   ├── registry/
-│   │   └── register_model.py               Registers model.tar.gz into the SageMaker Model Package
-│   │                                        Group "aml-shield-models" and approves it
-│   └── deployment/
-│       ├── deploy_endpoint.py              Deploys the approved model package to the real-time
-│       │                                    endpoint `aml-shield-endpoint` (eu-west-2)
-│       ├── test_endpoint.py                Sends one hand-built 66-value CSV row and prints the
-│       │                                    raw probability
-│       ├── test_endpoint_showcase.py       Side-by-side scoring of several sample transactions
-│       └── build_high_risk_sample.py       The parity test: builds the vector with the REAL
-│                                            src.features.build_feature_vector and sends it to
-│                                            SageMaker, so EC2 and SageMaker can be compared on
-│                                            genuinely identical input
+├── aws/                                SageMaker migration — the same pipeline, on AWS
+│   ├── processing/                         Feature engineering as a SageMaker Processing Job
+│   ├── training/                           SageMaker Training Job — built-in XGBoost, same hyperparameters
+│   ├── registry/                           Registers + approves the model in the Model Package Group
+│   └── deployment/                         Deploys the endpoint; includes the parity-test script (EC2 vs. SageMaker)
 │
 ├── dashboard/                          Streamlit demo front-end
-│   ├── app.py                              Transaction entry form, health banner, Plotly risk gauge,
-│   │                                        SHAP reasons — calls the EC2 FastAPI backend
-│   └── requirements.txt                    streamlit, requests, plotly (deployed separately from the API)
+│   ├── app.py                              Transaction form, risk gauge, SHAP reasons — calls the FastAPI backend
+│   └── requirements.txt                    streamlit, requests, plotly
 │
-├── terraform/                          Infrastructure as Code (eu-west-2)
-│   ├── provider.tf                         Terraform + AWS provider config
-│   ├── s3.tf                               aws_s3_bucket.aml_shield_data (bucket: aml-shield-2026)
-│   ├── iam.tf                              SageMaker execution role + SageMakerFullAccess and
-│   │                                        S3FullAccess policy attachments
-│   ├── ec2.tf                              aws_instance.aml_shield_server — the API host
-│   ├── sagemaker.tf                        aws_sagemaker_model_package_group.aml_shield_models
-│   └── .terraform.lock.hcl                 Provider version lock
-│                                           (state files are gitignored — imported, never recreated)
+├── terraform/                          Infrastructure as Code (eu-west-2) — imported, not recreated
+│   ├── provider.tf
+│   ├── s3.tf
+│   ├── iam.tf
+│   ├── ec2.tf
+│   ├── sagemaker.tf
+│   └── .terraform.lock.hcl
 │
 ├── tests/                              The CI gate — deployment fails if these fail
-│   ├── __init__.py
-│   ├── test_api_health.py                  API imports cleanly; /predict and /health routes exist
-│   └── test_features.py                    Feature contract: 66 columns out; is_weekend for
-│                                            Sat/Mon; is_night at 2am; ACH one-hot encoding
+│   ├── test_api_health.py                  API imports cleanly; core routes exist
+│   └── test_features.py                    Feature contract — 66 columns, encoding correctness
 │
 ├── models/
-│   └── xgboost-model                       Trained XGBoost artifact (~1.1 MB)
+│   └── xgboost-model                       Trained XGBoost artifact
 │
-├── mlruns/                             Project-level MLflow store (local file backend)
-│   ├── 0/ , 1/                             Experiment runs with figure artifacts and model versions
-│   ├── 852688675953394998/                 Run with the full metric set: test/val AUC-ROC,
-│   │                                        avg_precision, F1, precision, recall, TP/FP/TN/FN,
-│   │                                        plus all XGBoost hyperparameters
-│   └── models/aml-shield-xgboost/          Registered model, version-1
+├── mlruns/                             Project-level MLflow store
 │
-├── .github/
-│   └── workflows/
-│       └── deploy.yml                      CI/CD on push to main:
-│                                            job 1 `test` — pytest tests/ -v
-│                                            job 2 `deploy` (needs: test) — tag current image as
-│                                            rollback point, SSH to EC2, pull, disk-space guard
-│                                            (prune below 2GB), docker build/run, retrying health
-│                                            check (6 × 5s), auto-rollback to :previous on failure
+├── .github/workflows/deploy.yml        CI/CD — test job gates deploy job, auto-rollback on failed health check
+├── .devcontainer/devcontainer.json     Codespaces config — auto-runs the dashboard
 │
-├── .devcontainer/
-│   └── devcontainer.json                   Codespaces config — installs requirements and auto-runs
-│                                            the Streamlit dashboard on port 8501
-│
-├── Dockerfile                          python:3.12-slim, g++ for SHAP's C++ extensions,
-│                                        requirements-first layer caching, copies src/ + mlflow.db +
-│                                        mlruns/, exposes 8000, runs uvicorn src.api:app
-├── requirements.txt                    API/runtime pins: fastapi 0.115.6, uvicorn 0.34.0,
-│                                        pydantic 2.10.4, xgboost 1.7.6, scikit-learn 1.3.2,
-│                                        mlflow 2.9.2, shap 0.44.1, pandas 2.1.4, numpy 1.26.4
-├── prefect.yaml                        Two scheduled deployments on `local-pool`:
-│                                        aml-shield-training (cron 0 19 * * *, Europe/London) and
-│                                        aml-shield-drift-check (cron 30 20 * * *, Europe/London)
-├── log_inference_tests.py              Fires low/medium/high-risk payloads at the live EC2 /predict
-│                                        endpoint and logs each score to the MLflow experiment
-│                                        `aml-shield-inference-tests` — this is what turns the parity
-│                                        check into a repeatable test rather than a screenshot
+├── Dockerfile                          python:3.12-slim, builds and serves the FastAPI app
+├── requirements.txt                    API/runtime dependency pins
+├── prefect.yaml                        Scheduled deployments — training + drift-check flows
+├── log_inference_tests.py              Fires test payloads at the live endpoint, logs to MLflow
 ├── DECISION_LOG.md                     Key architectural decisions and why
 ├── FAILURES.md                         Bugs hit and how they were root-caused
-├── .dockerignore                       Keeps notebooks/, data/, tests/ and *.md out of the image
-├── .prefectignore                      Excludes caches, envs and editor files from flow uploads
-├── .gitignore                          Excludes data/, *.csv, mlflow.db, terraform state, venvs
+├── .dockerignore / .prefectignore / .gitignore
 ├── src.zip                             Archived snapshot of src/
 └── README.md
 ```
